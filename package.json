@@ -1,0 +1,25 @@
+{
+  "name": "cbcluster",
+  "version": "1.0.0",
+  "description": "Couchbase Server cluster setup utility",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "NoSQL",
+    "Couchbase Server"
+  ],
+  "author": "Brian Shumate",
+  "license": "BSD-2-Clause",
+  "preferGlobal": true,
+  "bin": {
+    "cbcluster": "main.js"
+  },
+  "dependencies": {
+    "bluebird": "^3.0.5",
+    "chalk": "^1.1.1",
+    "meow": "^3.5.0",
+    "request": "^2.65.0",
+    "vorpal": "^1.3.34"
+  }
+}
