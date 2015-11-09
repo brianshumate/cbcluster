@@ -66,8 +66,8 @@ vorpal
     request.post({
       url: args.options.host + endPoint,
       'auth': {
-        'user': args.options.user,
-        'pass': args.options.pass,
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
         'sendImmediately': true
       },
       form: formData
@@ -100,8 +100,8 @@ vorpal
     request.post({
       url: args.options.host + endPoint,
       'auth': {
-        'user': args.options.user,
-        'pass': args.options.pass,
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
         'sendImmediately': true
       },
       form: formData
@@ -131,8 +131,8 @@ vorpal
     request.post({
       url: args.options.host + endPoint,
       'auth': {
-        'user': args.options.user,
-        'pass': args.options.pass,
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
         'sendImmediately': true
       },
       form: formData
@@ -155,14 +155,14 @@ vorpal
   .option('-h --host', 'Node URL (ex: http://node.local:8091)')
   .option('-n --name', 'Bucket name')
   .option('-m --memory', 'Bucket RAM quota (in megabytes)')
-  .option('-e --eviction', 'Eviction policy (fullEviction or valueOnly')
+  .option('-e --eviction', 'Eviction policy (fullEviction or valueOnly)')
   .option('-f --flush', 'Bucket flush enabled (0 or 1)')
   .option('-i --index', 'View index replicas (0 or 1)')
   .option('-r --replicas', 'Number of replicas (1-3)')
   .option('-t --type', 'Bucket type (membase, or memcached)')
   .option('-a --auth', 'Auth type (sasl or FIXME)')
   .option('-s --saslpass', 'SASL authentication password')
-  .option('-w --wthreads', 'Number of writer threads')
+  .option('-w --wthreads', 'Number of writer threads (2 - FIXME)')
   .action(function (args, callback) {
     const self = this
     var cbNode = args.options.host.replace(/.*?:\/\//g, '').replace(/\:[0-9]{1,4}.(.*)/g, '')
@@ -175,7 +175,7 @@ vorpal
     var endPoint = '/pools/default/buckets'
     var formData = {
       flushEnabled: args.options.flush || cbFlush,
-      threadsNumber: args.options.wthreads,
+      threadsNumber: args.options.wthreads || 2,
       replicaIndex: args.options.index || cbReplicaIndex,
       replicaNumber: args.options.replicas || cbReplicas,
       evictionPolicy: args.options.eviction || cbEvictionPolicy,
@@ -188,16 +188,16 @@ vorpal
     request.post({
       url: args.options.host + endPoint,
       'auth': {
-        'user': args.options.user,
-        'pass': args.options.pass,
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
         'sendImmediately': true
       },
       form: formData
     }, function (error, response, body) {
-      if (!error && response.statusCode === 200 || response.statusCode === 202) {
-        self.log(chalk.green('SUCCESS: Created ' + args.options.name + ' bucket on node ' + cbNode))
-      } else if (response === undefined) {
+      if (response === undefined) {
         self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else if (!error && response.statusCode === 200 || response.statusCode === 202) {
+        self.log(chalk.green('SUCCESS: Created ' + args.options.name + ' bucket on node ' + cbNode))
       } else {
         self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
       }
