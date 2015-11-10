@@ -5,3 +5,9 @@
 ## v1.1.0
 
 - Simplified host naming
+
+## v1.2.0
+
+- Added a version command
+- Added a user agent string
+- Modified help and exit messages

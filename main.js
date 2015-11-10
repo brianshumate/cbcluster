@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
+'use strict'
+
 // Dependencies
 const chalk = require('chalk')
 const request = require('request')
 const vorpal = require('vorpal')()
+
+// cbcluster constants
+const packageJson = require('./package.json')
+const userAgent = 'cbcluster v' + packageJson.version
 
 // Default Couchbase Server variables
 var cbAdmin = 'Administrator'
@@ -36,6 +42,9 @@ vorpal
     }
     request.post({
       url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
       'auth': {
         'user': args.options.user || cbAdmin,
         'pass': args.options.pass || cbPass,
@@ -69,6 +78,9 @@ vorpal
     var formData = {hostname: args.options.name}
     request.post({
       url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
       'auth': {
         'user': args.options.user || cbAdmin,
         'pass': args.options.pass || cbPass,
@@ -105,6 +117,9 @@ vorpal
     }
     request.post({
       url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
       'auth': {
         'user': args.options.user || cbAdmin,
         'pass': args.options.pass || cbPass,
@@ -138,6 +153,9 @@ vorpal
     var formData = { services: args.options.services }
     request.post({
       url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
       'auth': {
         'user': args.options.user || cbAdmin,
         'pass': args.options.pass || cbPass,
@@ -197,6 +215,9 @@ vorpal
     }
     request.post({
       url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
       'auth': {
         'user': args.options.user || cbAdmin,
         'pass': args.options.pass || cbPass,
@@ -213,6 +234,78 @@ vorpal
       }
       callback()
     })
+  })
+
+vorpal
+  .command('vers', 'Get Couchbase Server version')
+  .option('-u --user', 'Couchbase Server administrator username')
+  .option('-p --pass', 'Couchbase Server administrator password')
+  .option('-h --host', 'Node URL (ex: http://node.local:8091)')
+  .option('-x --xport', 'Alternative cluster administration port')
+  .action(function (args, callback) {
+    const self = this
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/pools'
+    request({
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      }
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        var cbVersion = JSON.parse(body).implementationVersion
+        self.log(chalk.green('SUCCESS: Couchbase Server node: ' + cbNode + ' version: ' + cbVersion))
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+    })
+  })
+
+const help = vorpal.find('help')
+if (help) {
+  help.remove()
+}
+
+vorpal
+  .command('help [command]')
+  .description('Provides help for a given command')
+  .action(function (args, cb) {
+    if (args.command) {
+      var name = _.findWhere(this.parent.commands, {_name: String(args.command).toLowerCase().trim()})
+      if (name && !name._hidden) {
+        this.log(name.helpInformation())
+      } else {
+        this.log(this.parent._commandHelp(args.command))
+      }
+    } else {
+      this.log(this.parent._commandHelp(args.command))
+    }
+    cb()
+  })
+
+const exit = vorpal.find('exit')
+if (exit) {
+  exit.remove()
+}
+
+vorpal
+  .command('exit')
+  .alias('quit')
+  .option('-f, --force', 'Forces process kill without confirmation.')
+  .description('Exits this instance of cbcluster')
+  .action(function (args) {
+    args.options = args.options || {}
+    args.options.sessionId = this.session.id
+    this.parent.exit(args.options)
   })
 
 vorpal

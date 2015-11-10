@@ -1,6 +1,6 @@
 {
   "name": "cbcluster",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Couchbase Server cluster setup utility",
   "repository": "https://github.com/brianshumate/cbcluster",
   "scripts": {
