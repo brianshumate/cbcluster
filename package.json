@@ -1,7 +1,7 @@
 {
   "name": "cbcluster",
-  "version": "1.2.0",
-  "description": "Couchbase Server cluster setup utility",
+  "version": "1.2.1",
+  "description": "Small immersive Couchbase Server CLI",
   "repository": "https://github.com/brianshumate/cbcluster",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,7 +14,7 @@
   "license": "BSD-2-Clause",
   "preferGlobal": true,
   "bin": {
-    "cbcluster": "main.js"
+    "cbcluster": "bin/main.js"
   },
   "dependencies": {
     "bluebird": "^3.0.5",

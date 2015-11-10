@@ -12,3 +12,7 @@
 - Added a user agent string
 - Modified help and exit messages
 - Initial documentation
+
+## v1.2.1
+
+- Move main to bin
