@@ -9,7 +9,7 @@ const vorpal = require('vorpal')()
 const _ = require('lodash')
 
 // cbcluster constants
-const packageJson = require('./package.json')
+const packageJson = require('cbcluster/package').name
 const userAgent = 'cbcluster v' + packageJson.version
 
 // Default Couchbase Server variables

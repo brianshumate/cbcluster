@@ -16,3 +16,7 @@
 ## v1.2.1
 
 - Move main to bin
+
+## v1.2.2
+
+- Fix package.json parsing
