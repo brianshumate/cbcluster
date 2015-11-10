@@ -17,23 +17,25 @@ var bodyStrip = function (body) {
 
 vorpal
   .command('init', 'Initialize cluster node')
-  .option('-u --user', 'Couchbase Server administrator username (default: Administrator)')
-  .option('-p --pass', 'Couchbase Server administrator password (default: couchbase')
+  .option('-u --user', 'Cluster administrator username (default: Administrator)')
+  .option('-p --pass', 'Cluster Server administrator password (default: couchbase')
   .option('-d --data', 'Data path (default: /opt/couchbase/var/lib/couchbase/data)')
   .option('-i --index', 'Index path (default: /opt/couchbase/var/lib/couchbase/index)')
-  .option('-h --host', 'Node URL (example: http://node.local:8091)')
+  .option('-h --host', 'Node URL (example: node.local)')
+  .option('-x --xport', 'Alternative cluster administration port')
   .action(function (args, callback) {
     const self = this
-    const cbNode = args.options.host.replace(/.*?:\/\//g, '').replace(/\:[0-9]{1,4}.(.*)/g, '')
     const cbDataPath = '/opt/couchbase/var/lib/couchbase/data'
     const cbIndexPath = '/opt/couchbase/var/lib/couchbase/index'
     const endPoint = '/nodes/self/controller/settings'
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
     var formData = {
       data_path: cbDataPath || args.options.data,
       index_path: cbIndexPath || args.options.index
     }
     request.post({
-      url: args.options.host + endPoint,
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
       'auth': {
         'user': args.options.user || cbAdmin,
         'pass': args.options.pass || cbPass,
@@ -58,13 +60,15 @@ vorpal
   .option('-p --pass', 'Couchbase Server administrator password')
   .option('-h --host', 'Node URL (ex: http://node.local:8091)')
   .option('-n --name', 'Node name (hostname or IP address)')
+  .option('-x --xport', 'Alternative cluster administration port')
   .action(function (args, callback) {
     const self = this
-    var cbNode = args.options.host.replace(/.*?:\/\//g, '').replace(/\:[0-9]{1,4}.(.*)/g, '')
-    var endPoint = '/node/controller/rename'
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/node/controller/rename'
     var formData = {hostname: args.options.name}
     request.post({
-      url: args.options.host + endPoint,
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
       'auth': {
         'user': args.options.user || cbAdmin,
         'pass': args.options.pass || cbPass,
@@ -88,17 +92,19 @@ vorpal
   .option('-u --user', 'Couchbase Server administrator username')
   .option('-p --pass', 'Couchbase Server administrator password')
   .option('-h --host', 'Node URL (ex: http://node.local:8091)')
+  .option('-x --xport', 'Alternative cluster administration port')
   .action(function (args, callback) {
     const self = this
-    var cbNode = args.options.host.replace(/.*?:\/\//g, '').replace(/\:[0-9]{1,4}.(.*)/g, '')
-    var endPoint = '/settings/web'
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/settings/web'
     var formData = {
       password: args.options.pass,
       username: args.options.user,
       port: 'SAME'
     }
     request.post({
-      url: args.options.host + endPoint,
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
       'auth': {
         'user': args.options.user || cbAdmin,
         'pass': args.options.pass || cbPass,
@@ -123,13 +129,15 @@ vorpal
   .option('-p --pass', 'Couchbase Server administrator password')
   .option('-h --host', 'Node URL (ex: http://node.local:8091)')
   .option('-s --services', 'Node services (kv, index, n1ql)')
+  .option('-x --xport', 'Alternative cluster administration port')
   .action(function (args, callback) {
     const self = this
-    var cbNode = args.options.host.replace(/.*?:\/\//g, '').replace(/\:[0-9]{1,4}.(.*)/g, '')
-    var endPoint = '/node/controller/setupServices'
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/node/controller/setupServices'
     var formData = { services: args.options.services }
     request.post({
-      url: args.options.host + endPoint,
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
       'auth': {
         'user': args.options.user || cbAdmin,
         'pass': args.options.pass || cbPass,
@@ -163,16 +171,18 @@ vorpal
   .option('-a --auth', 'Auth type (sasl or FIXME)')
   .option('-s --saslpass', 'SASL authentication password')
   .option('-w --wthreads', 'Number of writer threads (2 - FIXME)')
+  .option('-x --xport', 'Alternative cluster administration port')
   .action(function (args, callback) {
     const self = this
-    var cbNode = args.options.host.replace(/.*?:\/\//g, '').replace(/\:[0-9]{1,4}.(.*)/g, '')
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/pools/default/buckets'
     var cbBucketType = 'membase'
     var cbEvictionPolicy = 'valueOnly'
     var cbBucketAuth = 'sasl'
     var cbReplicas = 1
     var cbReplicaIndex = 0
     var cbFlush = 0
-    var endPoint = '/pools/default/buckets'
     var formData = {
       flushEnabled: args.options.flush || cbFlush,
       threadsNumber: args.options.wthreads || 2,
@@ -186,7 +196,7 @@ vorpal
       saslPassword: args.options.saslpass
     }
     request.post({
-      url: args.options.host + endPoint,
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
       'auth': {
         'user': args.options.user || cbAdmin,
         'pass': args.options.pass || cbPass,
