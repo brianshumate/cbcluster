@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#! /usr/bin/env node
 
 'use strict'
 
@@ -6,6 +6,7 @@
 const chalk = require('chalk')
 const request = require('request')
 const vorpal = require('vorpal')()
+const _ = require('lodash')
 
 // cbcluster constants
 const packageJson = require('./package.json')
@@ -100,7 +101,7 @@ vorpal
   })
 
 vorpal
-  .command('user', 'Set administrator username and password')
+  .command('user', 'Specify administrator username and password')
   .option('-u --user', 'Couchbase Server administrator username')
   .option('-p --pass', 'Couchbase Server administrator password')
   .option('-h --host', 'Node URL (ex: http://node.local:8091)')
@@ -175,7 +176,7 @@ vorpal
   })
 
 vorpal
-  .command('bckt', 'Define a bucket')
+  .command('bckt', 'Create bucket')
   .option('-u --user', 'Couchbase Server administrator username')
   .option('-p --pass', 'Couchbase Server administrator password')
   .option('-h --host', 'Node URL (ex: http://node.local:8091)')
