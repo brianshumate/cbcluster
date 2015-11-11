@@ -385,9 +385,6 @@ vorpal
   .option('-p --pass', 'Couchbase Server administrator password')
   .option('-h --host', 'Node URL (ex: node.local)')
   .option('-x --xport', 'Alternative cluster administration port')
-  .parse(function (command, args) {
-    console.log(typeof (args))
-  })
   .action(function (args, callback) {
     const self = this
     const cbNode = args.options.host
@@ -406,7 +403,7 @@ vorpal
     }, function (error, response, body) {
       if (!error && response.statusCode === 200) {
         var cbVersion = JSON.parse(body).implementationVersion
-        self.log(chalk.green('SUCCESS: Couchbase Server node: ' + cbNode + ' version: ' + cbVersion))
+        self.log(chalk.green('SUCCESS: Couchbase Server node ' + cbNode + ' version: ' + cbVersion))
       } else if (response === undefined) {
         self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
       } else {

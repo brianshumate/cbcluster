@@ -30,3 +30,7 @@
 
 - Add eject command
 - Fix rebalance command
+
+## v1.3.2
+
+- Fix version command
