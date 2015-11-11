@@ -34,3 +34,10 @@
 ## v1.3.2
 
 - Fix version command
+
+## v1.4.0
+
+- Add failover command
+- Reorder commands
+- Complete create bucket options
+- Update documentation

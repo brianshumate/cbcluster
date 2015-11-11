@@ -40,13 +40,19 @@ cbcluster
 Get help:
 
 ```
+cbcluster> help
+
   Commands:
 
+    addn [options]   Add node to existing cluster
+    bckt [options]   Create bucket
+    ejct [options]   Eject node from cluster
+    flvr [options]   Fail over node
     init [options]   Initialize cluster node
     name [options]   Specify node name
-    user [options]   Set administrator username and password
+    rebl [options]   Rebalance cluster
     svcs [options]   Specify node services
-    bckt [options]   Define a bucket
+    user [options]   Specify administrator username and password
     vers [options]   Get Couchbase Server version
     help [command]   Provides help for a given command
     exit [options]   Exits this instance of cbcluster
@@ -62,19 +68,23 @@ Couchbase Server web console user interface:
 
 | Default setting        | Value           | Notes                       |
 | ---------------------- | --------------- | ----------------------------| 
-| Administrator username | *Administrator* | can be overridden with `-u` |
-| Administrator password | *couchbase*     | can be overridden with `-p` |
-| Node data path | */opt/couchbase/var/lib/couchbase/data* | can be overridden with `-d` |
-| Node index path | */opt/couchbase/var/lib/couchbase/index* | can be overridden with `-i` |
-| Node port | *8091* | can be overridden with `-x` |
-| Bucket type | *membase* | can be overridden with `-t` note that *membase* is the name for a *couchbase* style bucket; the other option is *memcached* |
-| Cache metadata | *valueOnly* | can be overridden with `-e` |
-| Access control | *sasl* | can be overridden with `-a` |
+| Administrator username | *Administrator* | [string] can be overridden with `-u` |
+| Administrator password | *couchbase*     | [string] can be overridden with `-p` |
+| Node data path | */opt/couchbase/var/lib/couchbase/data* | [string] can be overridden with `-d` |
+| Node index path | */opt/couchbase/var/lib/couchbase/index* | [string] can be overridden with `-i` |
+| Node port | *8091* | [int] can be overridden with `-x` |
+| Bucket type | *membase* | [string] can be overridden with `-t` note that *membase* is the name for a *couchbase* style bucket; the other option is *memcached* |
+| Per Node RAM Quota | *128* | [int] RAM quota per node for bucket (in megabytes) |
+| Cache metadata | *valueOnly* | [string] can be overridden with `-e` |
+| Access control | *sasl* | [string] can be overridden with `-a` |
 | Replicas | *1* | can be overridden with `-r` |
+| Index replicas | *0* | [0|1] can be overridden with `-i` |
+| Auto compaction | *0* | [0|1] can be overridden with `-c` |
+| Flush | *0* | [0|1] can be overridden with `-f` |
 
-All the above defaults can be overridden by command options.
+All the above defaults can of course be overridden by command options.
 
-### Usage Example
+### Usage Examples
 
 This example follows the [Creating a new cluster](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-node-provisioning.html) documentation and covers most of the current abilities available in
 `cbcluster`.
@@ -114,6 +124,21 @@ SUCCESS: Set administrator on node cb3.local: Administrator
 ```
 cbcluster> bckt -h cb3.local -p tacotown -n tacos -m 128 -s secretsalsa
 SUCCESS: Created tacos bucket on node cb3.local
+```
+
+#### Fail Node Over and Rebalance Out
+
+This example shows how to fail a node over, eject it from the cluster, and
+then perform a rebalance; this makes the failed over node no longer a
+cluster member.
+
+```
+cbcluster> flvr -h cb1.local -t cb2.local
+SUCCESS: Node cb2.local failed over
+cbcluster> ejct -h cb1.local -t cb2.local
+SUCCESS: Node cb2.local ejected from cluster
+cbcluster> rebl -h cb1.local -k cb1.local,cb3.local
+SUCCESS: Cluster rebalancing
 ```
 
 ## References

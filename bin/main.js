@@ -22,6 +22,191 @@ var bodyStrip = function (body) {
   return cleanBody
 }
 
+// Add node to cluster
+vorpal
+  .command('addn', 'Add node to existing cluster')
+  .option('-u --user', 'Couchbase Server administrator username')
+  .option('-p --pass', 'Couchbase Server administrator password')
+  .option('-h --host', 'Node URL (ex: node.local)')
+  .option('-t --target', 'Hostname or IP address of node to add')
+  .option('-s --services', 'Node services (kv,index,n1ql)')
+  .action(function (args, callback) {
+    const self = this
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/controller/addNode'
+    var formData = {
+      user: args.options.user,
+      password: args.options.pass,
+      hostname: args.options.target,
+      services: args.options.services
+    }
+    request.post({
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      },
+      form: formData
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        self.log(chalk.green('SUCCESS: Node ' + args.options.target + ' added to cluster'))
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+    })
+  })
+
+// Create bucket
+vorpal
+  .command('bckt', 'Create bucket')
+  .option('-u --user', 'Couchbase Server administrator username')
+  .option('-p --pass', 'Couchbase Server administrator password')
+  .option('-h --host', 'Node URL (ex: node.local)')
+  .option('-n --name', 'Bucket name')
+  .option('-m --memory', 'Bucket RAM quota (in megabytes)')
+  .option('-e --eviction', 'Eviction policy (fullEviction or valueOnly)')
+  .option('-c --compaction', 'Automatic compaction enabled [0|1]')
+  .option('-f --flush', 'Bucket flush enabled [0|1]')
+  .option('-i --index', 'View index replicas [0|1])')
+  .option('-r --replicas', 'Number of replicas (1-3)')
+  .option('-t --type', 'Bucket type (membase, or memcached)')
+  .option('-a --auth', 'Auth type (sasl or none)')
+  .option('-d --dedicated', 'Dedicated port number for auth-less bucket')
+  .option('-s --saslpass', 'SASL authentication password')
+  .option('-w --wthreads', 'Writer threads / Disk I/O optimization (2-8)')
+  .option('-x --xport', 'Alternative cluster administration port')
+  .action(function (args, callback) {
+    const self = this
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/pools/default/buckets'
+    var formData = {
+      autoCompaction: args.options.compaction || 0,
+      flushEnabled: args.options.flush || 0,
+      threadsNumber: args.options.wthreads || 3,
+      replicaIndex: args.options.index || 0,
+      replicaNumber: args.options.replicas || 1,
+      evictionPolicy: args.options.eviction || 'valueOnly',
+      ramQuotaMB: args.options.memory || 128,
+      bucketType: args.options.type || 'membase',
+      name: args.options.name,
+      authType: args.options.auth || 'sasl',
+      saslPassword: args.options.saslpass,
+      proxyPort: args.options.dedicated
+    }
+    request.post({
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      },
+      form: formData
+    }, function (error, response, body) {
+      if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else if (!error && response.statusCode === 200 || response.statusCode === 202) {
+        self.log(chalk.green('SUCCESS: Created ' + args.options.name + ' bucket on node ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+    })
+  })
+
+// Eject node from cluster
+vorpal
+  .command('ejct', 'Eject node from cluster')
+  .option('-u --user', 'Couchbase Server administrator username')
+  .option('-p --pass', 'Couchbase Server administrator password')
+  .option('-h --host', 'Node URL (ex: node.local)')
+  .option('-t --target', 'Hostname or IP address of node to eject')
+  .action(function (args, callback) {
+    const self = this
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/controller/ejectNode'
+    var otpNode = 'ns_1@' + args.options.target
+    var formData = {
+      user: args.options.user,
+      password: args.options.pass,
+      otpNode: otpNode
+    }
+    request.post({
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      },
+      form: formData
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        self.log(chalk.green('SUCCESS: Node ' + args.options.target + ' ejected from cluster'))
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+    })
+  })
+
+// Eject node from cluster
+vorpal
+  .command('flvr', 'Fail over node')
+  .option('-u --user', 'Couchbase Server administrator username')
+  .option('-p --pass', 'Couchbase Server administrator password')
+  .option('-h --host', 'Node URL (ex: node.local)')
+  .option('-t --target', 'Hostname or IP address of node to fail over')
+  .action(function (args, callback) {
+    const self = this
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/controller/failOver'
+    var otpNode = 'ns_1@' + args.options.target
+    var formData = {
+      user: args.options.user,
+      password: args.options.pass,
+      otpNode: otpNode
+    }
+    request.post({
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      },
+      form: formData
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        self.log(chalk.green('SUCCESS: Node ' + args.options.target + ' failed over'))
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+    })
+  })
+
 // Initialize node
 vorpal
   .command('init', 'Initialize cluster node')
@@ -102,166 +287,6 @@ vorpal
     })
   })
 
-// Specify admin user and password
-vorpal
-  .command('user', 'Specify administrator username and password')
-  .option('-u --user', 'Couchbase Server administrator username')
-  .option('-p --pass', 'Couchbase Server administrator password')
-  .option('-h --host', 'Node URL (ex: node.local)')
-  .option('-x --xport', 'Alternative cluster administration port')
-  .action(function (args, callback) {
-    const self = this
-    const cbNode = args.options.host
-    const cbPort = 8091 || args.options.xport
-    const endPoint = '/settings/web'
-    var formData = {
-      password: args.options.pass,
-      username: args.options.user,
-      port: 'SAME'
-    }
-    request.post({
-      url: 'http://' + cbNode + ':' + cbPort + endPoint,
-      headers: {
-        'User-Agent': userAgent
-      },
-      'auth': {
-        'user': args.options.user || cbAdmin,
-        'pass': args.options.pass || cbPass,
-        'sendImmediately': true
-      },
-      form: formData
-    }, function (error, response, body) {
-      if (!error && response.statusCode === 200) {
-        self.log(chalk.green('SUCCESS: Set administrator on node ' + cbNode + ': ' + args.options.user))
-      } else if (response === undefined) {
-        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
-      } else {
-        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
-      }
-      callback()
-    })
-  })
-
-// Specify services
-vorpal
-  .command('svcs', 'Specify node services')
-  .option('-u --user', 'Couchbase Server administrator username')
-  .option('-p --pass', 'Couchbase Server administrator password')
-  .option('-h --host', 'Node URL (ex: node.local)')
-  .option('-s --services', 'Node services (kv, index, n1ql)')
-  .option('-x --xport', 'Alternative cluster administration port')
-  .action(function (args, callback) {
-    const self = this
-    const cbNode = args.options.host
-    const cbPort = 8091 || args.options.xport
-    const endPoint = '/node/controller/setupServices'
-    var formData = { services: args.options.services }
-    request.post({
-      url: 'http://' + cbNode + ':' + cbPort + endPoint,
-      headers: {
-        'User-Agent': userAgent
-      },
-      'auth': {
-        'user': args.options.user || cbAdmin,
-        'pass': args.options.pass || cbPass,
-        'sendImmediately': true
-      },
-      form: formData
-    }, function (error, response, body) {
-      if (!error && response.statusCode === 200) {
-        self.log(chalk.green('SUCCESS: Specified services on node ' + cbNode + ': ' + args.options.services))
-      } else if (response === undefined) {
-        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
-      } else {
-        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
-      }
-      callback()
-    })
-  })
-
-// Add node to cluster
-vorpal
-  .command('addn', 'Add node to existing cluster')
-  .option('-u --user', 'Couchbase Server administrator username')
-  .option('-p --pass', 'Couchbase Server administrator password')
-  .option('-h --host', 'Node URL (ex: node.local)')
-  .option('-t --target', 'Hostname or IP address of node to add')
-  .option('-s --services', 'Node services (kv,index,n1ql)')
-  .action(function (args, callback) {
-    const self = this
-    const cbNode = args.options.host
-    const cbPort = 8091 || args.options.xport
-    const endPoint = '/controller/addNode'
-    var formData = {
-      user: args.options.user,
-      password: args.options.pass,
-      hostname: args.options.target,
-      services: args.options.services
-    }
-    request.post({
-      url: 'http://' + cbNode + ':' + cbPort + endPoint,
-      headers: {
-        'User-Agent': userAgent
-      },
-      'auth': {
-        'user': args.options.user || cbAdmin,
-        'pass': args.options.pass || cbPass,
-        'sendImmediately': true
-      },
-      form: formData
-    }, function (error, response, body) {
-      if (!error && response.statusCode === 200) {
-        self.log(chalk.green('SUCCESS: Node ' + args.options.target + ' added to cluster'))
-      } else if (response === undefined) {
-        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
-      } else {
-        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
-      }
-      callback()
-    })
-  })
-
-// Eject node from cluster
-vorpal
-  .command('ejct', 'Eject node from cluster')
-  .option('-u --user', 'Couchbase Server administrator username')
-  .option('-p --pass', 'Couchbase Server administrator password')
-  .option('-h --host', 'Node URL (ex: node.local)')
-  .option('-t --target', 'Hostname or IP address of node to eject')
-  .action(function (args, callback) {
-    const self = this
-    const cbNode = args.options.host
-    const cbPort = 8091 || args.options.xport
-    const endPoint = '/controller/ejectNode'
-    var otpNode = 'ns_1@' + args.options.target
-    var formData = {
-      user: args.options.user,
-      password: args.options.pass,
-      otpNode: otpNode
-    }
-    request.post({
-      url: 'http://' + cbNode + ':' + cbPort + endPoint,
-      headers: {
-        'User-Agent': userAgent
-      },
-      'auth': {
-        'user': args.options.user || cbAdmin,
-        'pass': args.options.pass || cbPass,
-        'sendImmediately': true
-      },
-      form: formData
-    }, function (error, response, body) {
-      if (!error && response.statusCode === 200) {
-        self.log(chalk.green('SUCCESS: Node ' + args.options.target + ' ejected from cluster'))
-      } else if (response === undefined) {
-        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
-      } else {
-        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
-      }
-      callback()
-    })
-  })
-
 // Rebalance cluster
 vorpal
   .command('rebl', 'Rebalance cluster')
@@ -315,45 +340,59 @@ vorpal
     })
   })
 
-// Create bucket
+// Specify services
 vorpal
-  .command('bckt', 'Create bucket')
+  .command('svcs', 'Specify node services')
   .option('-u --user', 'Couchbase Server administrator username')
   .option('-p --pass', 'Couchbase Server administrator password')
   .option('-h --host', 'Node URL (ex: node.local)')
-  .option('-n --name', 'Bucket name')
-  .option('-m --memory', 'Bucket RAM quota (in megabytes)')
-  .option('-e --eviction', 'Eviction policy (fullEviction or valueOnly)')
-  .option('-f --flush', 'Bucket flush enabled (0 or 1)')
-  .option('-i --index', 'View index replicas (0 or 1)')
-  .option('-r --replicas', 'Number of replicas (1-3)')
-  .option('-t --type', 'Bucket type (membase, or memcached)')
-  .option('-a --auth', 'Auth type (sasl or FIXME)')
-  .option('-s --saslpass', 'SASL authentication password')
-  .option('-w --wthreads', 'Number of writer threads (2 - FIXME)')
+  .option('-s --services', 'Node services (kv, index, n1ql)')
   .option('-x --xport', 'Alternative cluster administration port')
   .action(function (args, callback) {
     const self = this
     const cbNode = args.options.host
     const cbPort = 8091 || args.options.xport
-    const endPoint = '/pools/default/buckets'
-    var cbBucketType = 'membase'
-    var cbEvictionPolicy = 'valueOnly'
-    var cbBucketAuth = 'sasl'
-    var cbReplicas = 1
-    var cbReplicaIndex = 0
-    var cbFlush = 0
+    const endPoint = '/node/controller/setupServices'
+    var formData = { services: args.options.services }
+    request.post({
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      },
+      form: formData
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        self.log(chalk.green('SUCCESS: Specified services on node ' + cbNode + ': ' + args.options.services))
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+    })
+  })
+
+// Specify admin user and password
+vorpal
+  .command('user', 'Specify administrator username and password')
+  .option('-u --user', 'Couchbase Server administrator username')
+  .option('-p --pass', 'Couchbase Server administrator password')
+  .option('-h --host', 'Node URL (ex: node.local)')
+  .option('-x --xport', 'Alternative cluster administration port')
+  .action(function (args, callback) {
+    const self = this
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/settings/web'
     var formData = {
-      flushEnabled: args.options.flush || cbFlush,
-      threadsNumber: args.options.wthreads || 2,
-      replicaIndex: args.options.index || cbReplicaIndex,
-      replicaNumber: args.options.replicas || cbReplicas,
-      evictionPolicy: args.options.eviction || cbEvictionPolicy,
-      ramQuotaMB: args.options.memory,
-      bucketType: args.options.type || cbBucketType,
-      name: args.options.name,
-      authType: args.options.auth || cbBucketAuth,
-      saslPassword: args.options.saslpass
+      password: args.options.pass,
+      username: args.options.user,
+      port: 'SAME'
     }
     request.post({
       url: 'http://' + cbNode + ':' + cbPort + endPoint,
@@ -367,10 +406,10 @@ vorpal
       },
       form: formData
     }, function (error, response, body) {
-      if (response === undefined) {
+      if (!error && response.statusCode === 200) {
+        self.log(chalk.green('SUCCESS: Set administrator on node ' + cbNode + ': ' + args.options.user))
+      } else if (response === undefined) {
         self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
-      } else if (!error && response.statusCode === 200 || response.statusCode === 202) {
-        self.log(chalk.green('SUCCESS: Created ' + args.options.name + ' bucket on node ' + cbNode))
       } else {
         self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
       }
