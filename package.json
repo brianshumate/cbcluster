@@ -1,6 +1,6 @@
 {
   "name": "cbcluster",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Small immersive Couchbase Server CLI",
   "repository": "https://github.com/brianshumate/cbcluster",
   "scripts": {

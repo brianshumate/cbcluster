@@ -25,3 +25,8 @@
 
 - Add node command
 - Rebalance command
+
+## v1.3.1
+
+- Add eject command
+- Fix rebalance command

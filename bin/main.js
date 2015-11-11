@@ -221,9 +221,48 @@ vorpal
     })
   })
 
+// Eject node from cluster
+vorpal
+  .command('ejct', 'Eject node from cluster')
+  .option('-u --user', 'Couchbase Server administrator username')
+  .option('-p --pass', 'Couchbase Server administrator password')
+  .option('-h --host', 'Node URL (ex: node.local)')
+  .option('-t --target', 'Hostname or IP address of node to eject')
+  .action(function (args, callback) {
+    const self = this
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/controller/ejectNode'
+    var otpNode = 'ns_1@' + args.options.target
+    var formData = {
+      user: args.options.user,
+      password: args.options.pass,
+      otpNode: otpNode
+    }
+    request.post({
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      },
+      form: formData
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        self.log(chalk.green('SUCCESS: Node ' + args.options.target + ' ejected from cluster'))
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+    })
+  })
+
 // Rebalance cluster
-// NOTE: this needs the option modification feature to make nodes
-//       OTP style: i.e. prepend 'ns_1@' to hostnames
 vorpal
   .command('rebl', 'Rebalance cluster')
   .option('-u --user', 'Couchbase Server administrator username')
@@ -236,8 +275,19 @@ vorpal
     const cbNode = args.options.host
     const cbPort = 8091 || args.options.xport
     const endPoint = '/controller/rebalance'
-    var otpEjectedNodes = 'ns_1@' + (args.options.ejected.split(',').join(' ns_1@').split(' ').join(','))
-    var otpKnownNodes = 'ns_1@' + (args.options.known.split(',').join(' ns_1@').split(' ').join(','))
+    if (args.options.ejected === undefined) {
+      args.options.ejected = ''
+    } else if (args.options.ejected.indexOf(',') > -1) {
+      var otpEjectedNodes = 'ns_1@' + (args.options.ejected.split(',').join(' ns_1@').split(' ').join(','))
+    } else {
+      otpEjectedNodes = 'ns_1@' + args.options.ejected
+    }
+
+    if (args.options.known) {
+      var otpKnownNodes = 'ns_1@' + (args.options.known.split(',').join(' ns_1@').split(' ').join(','))
+    } else {
+      self.log(chalk.red('ERROR: -k option required'))
+    }
     var formData = {
       ejectedNodes: otpEjectedNodes || '',
       knownNodes: otpKnownNodes
