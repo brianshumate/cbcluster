@@ -20,3 +20,8 @@
 ## v1.2.2
 
 - Fix package.json parsing
+
+## v1.3.0
+
+- Add node command
+- Rebalance command

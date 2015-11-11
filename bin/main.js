@@ -22,6 +22,7 @@ var bodyStrip = function (body) {
   return cleanBody
 }
 
+// Initialize node
 vorpal
   .command('init', 'Initialize cluster node')
   .option('-u --user', 'Cluster administrator username (default: Administrator)')
@@ -64,11 +65,12 @@ vorpal
     })
   })
 
+// Name node
 vorpal
   .command('name', 'Specify node name')
   .option('-u --user', 'Couchbase Server administrator username')
   .option('-p --pass', 'Couchbase Server administrator password')
-  .option('-h --host', 'Node URL (ex: http://node.local:8091)')
+  .option('-h --host', 'Node URL (ex: node.local)')
   .option('-n --name', 'Node name (hostname or IP address)')
   .option('-x --xport', 'Alternative cluster administration port')
   .action(function (args, callback) {
@@ -100,11 +102,12 @@ vorpal
     })
   })
 
+// Specify admin user and password
 vorpal
   .command('user', 'Specify administrator username and password')
   .option('-u --user', 'Couchbase Server administrator username')
   .option('-p --pass', 'Couchbase Server administrator password')
-  .option('-h --host', 'Node URL (ex: http://node.local:8091)')
+  .option('-h --host', 'Node URL (ex: node.local)')
   .option('-x --xport', 'Alternative cluster administration port')
   .action(function (args, callback) {
     const self = this
@@ -139,11 +142,12 @@ vorpal
     })
   })
 
+// Specify services
 vorpal
   .command('svcs', 'Specify node services')
   .option('-u --user', 'Couchbase Server administrator username')
   .option('-p --pass', 'Couchbase Server administrator password')
-  .option('-h --host', 'Node URL (ex: http://node.local:8091)')
+  .option('-h --host', 'Node URL (ex: node.local)')
   .option('-s --services', 'Node services (kv, index, n1ql)')
   .option('-x --xport', 'Alternative cluster administration port')
   .action(function (args, callback) {
@@ -175,11 +179,98 @@ vorpal
     })
   })
 
+// Add node to cluster
+vorpal
+  .command('addn', 'Add node to existing cluster')
+  .option('-u --user', 'Couchbase Server administrator username')
+  .option('-p --pass', 'Couchbase Server administrator password')
+  .option('-h --host', 'Node URL (ex: node.local)')
+  .option('-t --target', 'Hostname or IP address of node to add')
+  .option('-s --services', 'Node services (kv,index,n1ql)')
+  .action(function (args, callback) {
+    const self = this
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/controller/addNode'
+    var formData = {
+      user: args.options.user,
+      password: args.options.pass,
+      hostname: args.options.target,
+      services: args.options.services
+    }
+    request.post({
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      },
+      form: formData
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        self.log(chalk.green('SUCCESS: Node ' + args.options.target + ' added to cluster'))
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+    })
+  })
+
+// Rebalance cluster
+// NOTE: this needs the option modification feature to make nodes
+//       OTP style: i.e. prepend 'ns_1@' to hostnames
+vorpal
+  .command('rebl', 'Rebalance cluster')
+  .option('-u --user', 'Couchbase Server administrator username')
+  .option('-p --pass', 'Couchbase Server administrator password')
+  .option('-h --host', 'Node URL (ex: node.local)')
+  .option('-e --ejected', 'Comma separated list of nodes to eject')
+  .option('-k --known', 'Comma separated list of known nodes, including added')
+  .action(function (args, callback) {
+    const self = this
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endPoint = '/controller/rebalance'
+    var otpEjectedNodes = 'ns_1@' + (args.options.ejected.split(',').join(' ns_1@').split(' ').join(','))
+    var otpKnownNodes = 'ns_1@' + (args.options.known.split(',').join(' ns_1@').split(' ').join(','))
+    var formData = {
+      ejectedNodes: otpEjectedNodes || '',
+      knownNodes: otpKnownNodes
+    }
+    request.post({
+      url: 'http://' + cbNode + ':' + cbPort + endPoint,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      },
+      form: formData
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        self.log(chalk.green('SUCCESS: Cluster rebalancing'))
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+    })
+  })
+
+// Create bucket
 vorpal
   .command('bckt', 'Create bucket')
   .option('-u --user', 'Couchbase Server administrator username')
   .option('-p --pass', 'Couchbase Server administrator password')
-  .option('-h --host', 'Node URL (ex: http://node.local:8091)')
+  .option('-h --host', 'Node URL (ex: node.local)')
   .option('-n --name', 'Bucket name')
   .option('-m --memory', 'Bucket RAM quota (in megabytes)')
   .option('-e --eviction', 'Eviction policy (fullEviction or valueOnly)')
@@ -237,12 +328,16 @@ vorpal
     })
   })
 
+// Get Couchbase Server version
 vorpal
   .command('vers', 'Get Couchbase Server version')
   .option('-u --user', 'Couchbase Server administrator username')
   .option('-p --pass', 'Couchbase Server administrator password')
-  .option('-h --host', 'Node URL (ex: http://node.local:8091)')
+  .option('-h --host', 'Node URL (ex: node.local)')
   .option('-x --xport', 'Alternative cluster administration port')
+  .parse(function (command, args) {
+    console.log(typeof (args))
+  })
   .action(function (args, callback) {
     const self = this
     const cbNode = args.options.host
@@ -271,6 +366,7 @@ vorpal
     })
   })
 
+// Help rewrites
 const help = vorpal.find('help')
 if (help) {
   help.remove()
