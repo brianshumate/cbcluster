@@ -48,12 +48,12 @@ cbcluster> help
     bckt [options]   Create bucket
     ejct [options]   Eject node from cluster
     flvr [options]   Fail over node
+    info [options]   Get Couchbase Server information
     init [options]   Initialize node
     name [options]   Specify node name
     rebl [options]   Rebalance cluster
     svcs [options]   Specify node services
     user [options]   Specify administrator username and password
-    vers [options]   Get Couchbase Server version
     help [command]   Provides help for a given command
     exit [options]   Exits this instance of cbcluster
 ```
@@ -164,5 +164,5 @@ This project works with the following software:
 2. [Adding nodes to clusters](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-cluster-addnodes.html)
 3. [Buckets API](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-bucket-intro.html)
 4. [Removing nodes from clusters](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-cluster-removenode.html)
-5 [Failing over nodes](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-node-failover.html)
+5. [Failing over nodes](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-node-failover.html)
 6. [Rebalancing nodes](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-cluster-rebalance.html)

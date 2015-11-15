@@ -42,7 +42,13 @@
 - Complete create bucket options
 - Update documentation
 
-# v1.4.1
+## v1.4.1
 
 - Tighten help texts
+- Add info command
 - Update docs
+
+## v1.4.2
+
+- Update docs
+
