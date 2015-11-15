@@ -41,3 +41,8 @@
 - Reorder commands
 - Complete create bucket options
 - Update documentation
+
+# v1.4.1
+
+- Tighten help texts
+- Update docs

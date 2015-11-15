@@ -48,7 +48,7 @@ cbcluster> help
     bckt [options]   Create bucket
     ejct [options]   Eject node from cluster
     flvr [options]   Fail over node
-    init [options]   Initialize cluster node
+    init [options]   Initialize node
     name [options]   Specify node name
     rebl [options]   Rebalance cluster
     svcs [options]   Specify node services
@@ -72,15 +72,16 @@ Couchbase Server web console user interface:
 | Administrator password | *couchbase*     | [string] can be overridden with `-p` |
 | Node data path | */opt/couchbase/var/lib/couchbase/data* | [string] can be overridden with `-d` |
 | Node index path | */opt/couchbase/var/lib/couchbase/index* | [string] can be overridden with `-i` |
-| Node port | *8091* | [int] can be overridden with `-x` |
-| Bucket type | *membase* | [string] can be overridden with `-t` note that *membase* is the name for a *couchbase* style bucket; the other option is *memcached* |
+| Node port | *8091* | [int] can be overridden with `-x 18091` |
+| Bucket type | *membase* | [string] can be overridden with `-t memcached` note that *membase* is the name for a *couchbase* style bucket; the other option is *memcached* |
 | Per Node RAM Quota | *128* | [int] RAM quota per node for bucket (in megabytes) |
-| Cache metadata | *valueOnly* | [string] can be overridden with `-e` |
-| Access control | *sasl* | [string] can be overridden with `-a` |
-| Replicas | *1* | can be overridden with `-r` |
-| Index replicas | *0* | [0|1] can be overridden with `-i` |
-| Auto compaction | *0* | [0|1] can be overridden with `-c` |
-| Flush | *0* | [0|1] can be overridden with `-f` |
+| Cache metadata | *valueOnly* | [string] can be overridden with `-e fullEviction` |
+| Access control | *sasl* | [string] can be overridden with `-a none` |
+| Bucket port | None | Set a bucket auth port number with `-d 11242` |
+| Replicas | *1* | [int] can be overridden with (2,3) `-r 3` |
+| Index replicas | *0* | [0 or 1] can be overridden with `-i` |
+| Auto compaction | *0* | [0 or 1] can be overridden with `-c` |
+| Flush | *0* | [0 or 1] can be overridden with `-f` |
 
 All the above defaults can of course be overridden by command options.
 
@@ -88,6 +89,15 @@ All the above defaults can of course be overridden by command options.
 
 This example follows the [Creating a new cluster](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-node-provisioning.html) documentation and covers most of the current abilities available in
 `cbcluster`.
+
+#### Couchbase Server Version
+
+Determine the Couchbase Server version on a given cluster node:
+
+```
+cbcluster> vers -h cb1.local
+SUCCESS: Couchbase Server node cb1.local version: 3.1.1-1807-rel-enterprise
+```
 
 #### Initialize Node
 
@@ -141,6 +151,18 @@ cbcluster> rebl -h cb1.local -k cb1.local,cb3.local
 SUCCESS: Cluster rebalancing
 ```
 
+## Notes
+
+This project works with the following software:
+
+* Couchbase Server 3.x-4.x
+* Node.js 4.2.2
+
 ## References
 
 1. [Creating a new cluster](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-node-provisioning.html)
+2. [Adding nodes to clusters](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-cluster-addnodes.html)
+3. [Buckets API](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-bucket-intro.html)
+4. [Removing nodes from clusters](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-cluster-removenode.html)
+5 [Failing over nodes](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-node-failover.html)
+6. [Rebalancing nodes](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-cluster-rebalance.html)

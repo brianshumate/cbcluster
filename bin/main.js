@@ -4,20 +4,22 @@
 
 // Dependencies
 const chalk = require('chalk')
+const Table = require('cli-table')
+const humanize = require('humanize')
+const _ = require('lodash')
 const request = require('request')
 const vorpal = require('vorpal')()
-const _ = require('lodash')
 
 // cbcluster constants
 const packageJson = require('cbcluster/package').name
 const userAgent = 'cbcluster v' + packageJson.version
 
-// Default Couchbase Server variables
+// Default global Couchbase Server variables
 var cbAdmin = 'Administrator'
 var cbPass = 'couchbase'
 
 // Clean up API response body by removing [""]
-var bodyStrip = function (body) {
+const bodyStrip = function (body) {
   var cleanBody = body.replace(/["]+/g, '').replace(/[\[\]']+/g, '')
   return cleanBody
 }
@@ -166,7 +168,7 @@ vorpal
     })
   })
 
-// Eject node from cluster
+// Fail over node
 vorpal
   .command('flvr', 'Fail over node')
   .option('-u --user', 'Couchbase Server administrator username')
@@ -207,9 +209,107 @@ vorpal
     })
   })
 
+// Get Couchbase Server information
+vorpal
+  .command('info', 'Get Couchbase Server information')
+  .option('-u --user', 'Couchbase Server administrator username')
+  .option('-p --pass', 'Couchbase Server administrator password')
+  .option('-h --host', 'Node URL (ex: node.local)')
+  .option('-x --xport', 'Alternative cluster administration port')
+  .action(function (args, callback) {
+    const self = this
+    const cbNode = args.options.host
+    const cbPort = 8091 || args.options.xport
+    const endpointPools = '/pools'
+    const endpointNodes = '/pools/nodes'
+    const endpointStatuses = '/nodeStatuses'
+    // instantiate table
+    var table = new Table({
+      head: ['Node', cbNode],
+      colWidths: [24, 42]
+    })
+    // Get /pools details
+    request({
+      url: 'http://' + cbNode + ':' + cbPort + endpointPools,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      }
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        var cbVersion = JSON.parse(body).implementationVersion
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+      table.push(['Product version', cbVersion])
+    })
+    // Get /nodeStatuses details
+    request({
+      url: 'http://' + cbNode + ':' + cbPort + endpointStatuses,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      }
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        // var cbHealthStatus = JSON.parse(body).cbNode + ':' + cbPort.status
+        var cbHealthStatus = JSON.parse(body)[cbNode + ':' + cbPort].status
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+      table.push(['Health status', cbHealthStatus])
+    })
+    // Get /pools/nodes details
+    request({
+      url: 'http://' + cbNode + ':' + cbPort + endpointNodes,
+      headers: {
+        'User-Agent': userAgent
+      },
+      'auth': {
+        'user': args.options.user || cbAdmin,
+        'pass': args.options.pass || cbPass,
+        'sendImmediately': true
+      }
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        var ramUsed = JSON.parse(body).storageTotals.ram.used
+        var ramTotal = JSON.parse(body).storageTotals.ram.total
+        var hddFree = JSON.parse(body).storageTotals.hdd.free
+        var hddUsed = JSON.parse(body).storageTotals.hdd.used
+        var rbStatus = JSON.parse(body).rebalanceStatus
+      } else if (response === undefined) {
+        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
+      } else {
+        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
+      }
+      callback()
+      table.push(['Ram', 'Total: ' + humanize.filesize(ramTotal) + '\n' + 'Used: ' + humanize.filesize(ramUsed)])
+      table.push(['Storage', 'Used: ' + humanize.filesize(hddUsed) + '\n' + 'Free: ' + humanize.filesize(hddFree)])
+      table.push(['Rebalance status', rbStatus])
+      // PoC: fix this later
+      setTimeout(function () {
+        self.log(table.toString())
+      }, 1000)
+    })
+  })
+
 // Initialize node
 vorpal
-  .command('init', 'Initialize cluster node')
+  .command('init', 'Initialize node')
   .option('-u --user', 'Cluster administrator username (default: Administrator)')
   .option('-p --pass', 'Cluster Server administrator password (default: couchbase')
   .option('-d --data', 'Data path (default: /opt/couchbase/var/lib/couchbase/data)')
@@ -294,7 +394,7 @@ vorpal
   .option('-p --pass', 'Couchbase Server administrator password')
   .option('-h --host', 'Node URL (ex: node.local)')
   .option('-e --ejected', 'Comma separated list of nodes to eject')
-  .option('-k --known', 'Comma separated list of known nodes, including added')
+  .option('-k --known', 'Comma separated list of known nodes (including newly added)')
   .action(function (args, callback) {
     const self = this
     const cbNode = args.options.host
@@ -408,41 +508,6 @@ vorpal
     }, function (error, response, body) {
       if (!error && response.statusCode === 200) {
         self.log(chalk.green('SUCCESS: Set administrator on node ' + cbNode + ': ' + args.options.user))
-      } else if (response === undefined) {
-        self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
-      } else {
-        self.log(chalk.red('ERROR: ' + response.statusCode + ' ' + bodyStrip(body)))
-      }
-      callback()
-    })
-  })
-
-// Get Couchbase Server version
-vorpal
-  .command('vers', 'Get Couchbase Server version')
-  .option('-u --user', 'Couchbase Server administrator username')
-  .option('-p --pass', 'Couchbase Server administrator password')
-  .option('-h --host', 'Node URL (ex: node.local)')
-  .option('-x --xport', 'Alternative cluster administration port')
-  .action(function (args, callback) {
-    const self = this
-    const cbNode = args.options.host
-    const cbPort = 8091 || args.options.xport
-    const endPoint = '/pools'
-    request({
-      url: 'http://' + cbNode + ':' + cbPort + endPoint,
-      headers: {
-        'User-Agent': userAgent
-      },
-      'auth': {
-        'user': args.options.user || cbAdmin,
-        'pass': args.options.pass || cbPass,
-        'sendImmediately': true
-      }
-    }, function (error, response, body) {
-      if (!error && response.statusCode === 200) {
-        var cbVersion = JSON.parse(body).implementationVersion
-        self.log(chalk.green('SUCCESS: Couchbase Server node ' + cbNode + ' version: ' + cbVersion))
       } else if (response === undefined) {
         self.log(chalk.red('ERROR: Cannot communicate with ' + cbNode))
       } else {
