@@ -3,6 +3,7 @@
 'use strict'
 
 // Dependencies
+const async = require('async')
 const chalk = require('chalk')
 const Table = require('cli-table')
 const humanize = require('humanize')
