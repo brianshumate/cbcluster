@@ -52,3 +52,6 @@
 
 - Update docs
 
+## v1.5.1
+
+- Greenkeeping
