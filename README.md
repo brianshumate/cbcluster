@@ -8,7 +8,7 @@
 `cbcluster` is a small immersive command line utility for interacting with
 Couchbase Server clusters.
 
-Development is ongoing to mirror some of the examples shown in the
+It was whipped up in a stupor to mirror some of the examples shown in the
 [REST API Reference](http://developer.couchbase.com/documentation/server/4.0/rest-api/rest-intro.html) documentation. The primary focus of this tool is
 compact commands for quick cluster interaction.
 
